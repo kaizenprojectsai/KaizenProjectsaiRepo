@@ -5,16 +5,18 @@ import { buildContextFromResults } from '@/lib/knowledge/retrieval/context-assem
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-const SYSTEM_PROMPT = `Eres KAIZEN, un asistente de inteligencia artificial experto en formulación de proyectos. Tu misión es ayudar al usuario a estructurar su proyecto desde cero.
-
-REGLAS:
-1. Eres un consultor experto en proyectos - guía al usuario con preguntas inteligentes
-2. Responde SIEMPRE en español (Colombia)
-3. Usa un tono profesional pero amigable
-4. Cuando el usuario comparta una idea, haz preguntas específicas para estructurarla
-5. Ofrece sugerencias basadas en el contexto colombiano (Fondo Emprender, iNNpulsa, MinCiencias, etc.)
-6. Siempre cita las fuentes del contexto cuando las uses [Fuente 1], [Fuente 2], etc.
-7. Proporciona ejemplos concretos cuando sea relevante`
+const SYSTEM_PROMPT = [
+  'Eres KAIZEN, un asistente de inteligencia artificial experto en formulación de proyectos. Tu misión es ayudar al usuario a estructurar su proyecto desde cero.',
+  '',
+  'REGLAS:',
+  '1. Eres un consultor experto en proyectos - guía al usuario con preguntas inteligentes',
+  '2. Responde SIEMPRE en español (Colombia)',
+  '3. Usa un tono profesional pero amigable',
+  '4. Cuando el usuario comparta una idea, haz preguntas específicas para estructurarla',
+  '5. Ofrece sugerencias basadas en el contexto colombiano (Fondo Emprender, iNNpulsa, MinCiencias, etc.)',
+  '6. Siempre cita las fuentes del contexto cuando las uses [Fuente 1], [Fuente 2], etc.',
+  '7. Proporciona ejemplos concretos cuando sea relevante',
+].join('\n')
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
       generationConfig: { temperature: 0.7, topP: 0.95, topK: 40, maxOutputTokens: 8192 },
     })
 
-    // 🔥 Obtener organización del usuario para filtrar RAG por organización
+    // Obtener organizacin del usuario para filtrar RAG por organizacin
     let organizationId: string | undefined
     try {
       const supabase = await createClient()
@@ -45,9 +47,9 @@ export async function POST(request: Request) {
           .single()
         organizationId = profile?.organization_id || undefined
       }
-    } catch { /* Ignorar si no hay sesión */ }
+    } catch { /* Ignorar si no hay sesin */ }
 
-    // 🔥 RAG: Buscar contexto relevante filtrado por organización
+    // RAG: Buscar contexto relevante filtrado por organizacin
     const ragResults = await hybridSearch(message, {
       limit: 5,
       threshold: 0.5,
@@ -57,26 +59,23 @@ export async function POST(request: Request) {
     const ragContext = buildContextFromResults(message, ragResults)
     const hasContext = ragContext.chunks.length > 0
 
-    // Construir el prompt enriquecido con RAG (sin duplicar SYSTEM_PROMPT)
+    // Construir el prompt enriquecido con RAG (evitando escapes problemticos)
     let ragPrompt = message
     if (hasContext) {
-      const sourcesText = ragContext.chunks
-        .map((c, i) => `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})
-${c.content}`)
-        .join('
-
-')
-
-      ragPrompt = [
-        'Contexto relevante de la base de conocimiento:',
-        sourcesText,
-        '---',
-        'Mensaje del usuario:',
-        message,
-        'Responde usando el contexto cuando sea relevante, citando las fuentes como [Fuente 1], [Fuente 2], etc. Si el contexto no es suficiente, responde con tu conocimiento pero indícalo.',
-      ].join('
-
-')
+      const promptParts: string[] = ['Contexto relevante de la base de conocimiento:']
+      for (let i = 0; i < ragContext.chunks.length; i++) {
+        const c = ragContext.chunks[i]
+        promptParts.push(
+          `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})\n${c.content}`
+        )
+      }
+      promptParts.push('---')
+      promptParts.push('Mensaje del usuario:')
+      promptParts.push(message)
+      promptParts.push(
+        'Responde usando el contexto cuando sea relevante, citando las fuentes como [Fuente 1], [Fuente 2], etc. Si el contexto no es suficiente, responde con tu conocimiento pero indcalo.'
+      )
+      ragPrompt = promptParts.join('\n\n')
     }
 
     // Construir historial
@@ -106,7 +105,10 @@ ${c.content}`)
         try {
           // Si hay contexto RAG, enviar metadata primero
           if (hasContext) {
-            const metadata = `📚 *Usando ${ragContext.chunks.length} fuentes de la base de conocimiento*\n\n`
+            const metadata = [
+              `📚 *Usando ${ragContext.chunks.length} fuentes de la base de conocimiento*`,
+              '',
+            ].join('\n')
             controller.enqueue(new TextEncoder().encode(metadata))
           }
 
