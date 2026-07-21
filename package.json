@@ -44,6 +44,7 @@
   "dependencies": {
     "@langchain/core": "^1.2.3",
     "@langchain/google-genai": "^2.2.0",
-    "@langchain/langgraph": "^1.4.8"
+    "@langchain/langgraph": "^1.4.8",
+    "posthog-js": "^1.405.2"
   }
 }
