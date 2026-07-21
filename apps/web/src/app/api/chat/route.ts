@@ -58,20 +58,21 @@ export async function POST(request: Request) {
     const hasContext = ragContext.chunks.length > 0
 
     // Construir el prompt enriquecido con RAG (sin duplicar SYSTEM_PROMPT)
-    const ragPrompt = hasContext
-      ? `Contexto relevante de la base de conocimiento:
-${ragContext.chunks.map((c, i) => `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})
-${c.content}`).join('
+    let ragPrompt = message
+    if (hasContext) {
+      const sourcesText = ragContext.chunks
+        .map((c, i) => `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})\n${c.content}`)
+        .join('\n\n')
 
-')}
-
----
-
-Mensaje del usuario:
-${message}
-
-Responde usando el contexto cuando sea relevante, citando las fuentes como [Fuente 1], [Fuente 2], etc. Si el contexto no es suficiente, responde con tu conocimiento pero indícalo.`
-      : message
+      ragPrompt = [
+        'Contexto relevante de la base de conocimiento:',
+        sourcesText,
+        '---',
+        'Mensaje del usuario:',
+        message,
+        'Responde usando el contexto cuando sea relevante, citando las fuentes como [Fuente 1], [Fuente 2], etc. Si el contexto no es suficiente, responde con tu conocimiento pero indícalo.',
+      ].join('\n\n')
+    }
 
     // Construir historial
     const history = [
