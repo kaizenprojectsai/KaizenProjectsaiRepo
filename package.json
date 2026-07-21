@@ -1,0 +1,35 @@
+{
+  "name": "kaizen-project",
+  "private": true,
+  "version": "0.1.0",
+  "description": "KAIZEN PROJECT'S IA - Plataforma de formulación de proyectos con IA",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:watch": "turbo test:watch",
+    "clean": "turbo clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:seed": "node tooling/seed.js",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.3.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "turbo": "^2.1.0",
+    "typescript": "^5.5.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{md,json}": ["prettier --write"]
+  },
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

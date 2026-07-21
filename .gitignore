@@ -1,0 +1,60 @@
+# ============================================================
+# KAIZEN PROJECT'S IA — Git Ignore
+# ============================================================
+
+# === Environment Variables ===
+.env
+.env.*
+!.env.example
+Configuracion*.txt
+Configuracion*.md
+*_keys*.txt
+*_keys*.md
+
+# === Dependencies ===
+node_modules/
+.pnp/
+.pnp.js
+
+# === Build Output ===
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+*.DS_Store
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Testing ===
+coverage/
+.nyc_output/
+
+# === TypeScript ===
+*.tsbuildinfo
+next-env.d.ts
+
+# === Temporary Files ===
+~$*.docx
+~$*.doc
+*.tmp
+
+# === Misc ===
+*.local
+.cache/
+temp/
+

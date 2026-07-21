@@ -1,0 +1,84 @@
+# ============================================================
+# KAIZEN PROJECT'S IA — CI/CD Pipeline
+# ============================================================
+# Este workflow requiere 3 Secrets en GitHub:
+#   - VERCEL_TOKEN     → vcp_8ljO0Vz4NfVhsM9P7cEYSEYS80r2wOwVyZGCwJLDRkeJXR0NxB2amRGP
+#   - VERCEL_ORG_ID    → team_SVIwdJY54myP53PFrLm79KSK
+#   - VERCEL_PROJECT_ID → prj_VwJhi7FazTCtfNX9fpoRkXiBGNcs
+#
+# 📍 Dónde configurarlos:
+#   GitHub → Repositorio → Settings → Secrets and variables → Actions
+# ============================================================
+
+name: Deploy KAIZEN
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main]
+
+jobs:
+    # ============================================================
+    # JOB 1: Quality Gate (TypeScript, Lint, Tests)
+    # ============================================================
+    quality:
+        name: Quality Check
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: TypeScript check
+              run: npm run typecheck
+
+            - name: Lint check
+              run: npm run lint
+
+            - name: Run tests
+              run: npm run test
+
+    # ============================================================
+    # JOB 2: Deploy to Vercel (solo en main)
+    # ============================================================
+    deploy:
+        name: Deploy to Vercel
+        needs: quality
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build project
+              run: npm run build
+
+            - name: Deploy to Vercel
+              uses: amondnet/vercel-action@v25
+              with:
+                  # ⚠️ Estos valores se leen de GitHub Secrets
+                  vercel-token: ${{ secrets.VERCEL_TOKEN }}
+                  vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+                  vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+                  vercel-args: "--prod"
+                  working-directory: ./
