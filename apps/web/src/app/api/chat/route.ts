@@ -61,8 +61,11 @@ export async function POST(request: Request) {
     let ragPrompt = message
     if (hasContext) {
       const sourcesText = ragContext.chunks
-        .map((c, i) => `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})\n${c.content}`)
-        .join('\n\n')
+        .map((c, i) => `[Fuente ${i + 1}] (${(c.similarity * 100).toFixed(0)}% - ${c.domain})
+${c.content}`)
+        .join('
+
+')
 
       ragPrompt = [
         'Contexto relevante de la base de conocimiento:',
@@ -71,7 +74,9 @@ export async function POST(request: Request) {
         'Mensaje del usuario:',
         message,
         'Responde usando el contexto cuando sea relevante, citando las fuentes como [Fuente 1], [Fuente 2], etc. Si el contexto no es suficiente, responde con tu conocimiento pero indícalo.',
-      ].join('\n\n')
+      ].join('
+
+')
     }
 
     // Construir historial
