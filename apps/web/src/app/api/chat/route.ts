@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
@@ -30,10 +29,10 @@ export async function POST(request: Request) {
     const { message, context } = await request.json()
 
     if (!message) {
-      return NextResponse.json(
-        { error: 'Mensaje requerido' },
-        { status: 400 },
-      )
+      return new Response(JSON.stringify({ error: 'Mensaje requerido' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
     const model = genAI.getGenerativeModel({
@@ -46,7 +45,7 @@ export async function POST(request: Request) {
       },
     })
 
-    // Construir historial
+    // Construir historial para el chat
     const history = [
       {
         role: 'user' as const,
@@ -78,21 +77,52 @@ export async function POST(request: Request) {
       },
     })
 
-    const result = await chat.sendMessage(message)
-    const response = result.response.text()
+    // Usar streaming en tiempo real
+    const result = await chat.sendMessageStream(message)
 
-    return NextResponse.json({
-      message: response,
+    // Crear un ReadableStream que envía cada chunk de texto al cliente
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) {
+              controller.enqueue(new TextEncoder().encode(text))
+            }
+          }
+          controller.close()
+        } catch (err) {
+          console.error('Error en streaming:', err)
+          controller.enqueue(
+            new TextEncoder().encode(
+              '\n\n⚠️ *Error al generar la respuesta. Por favor, intenta de nuevo.*',
+            ),
+          )
+          controller.close()
+        }
+      },
+    })
+
+    // Devolver la respuesta como texto plano con streaming
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+      },
     })
   } catch (error) {
     console.error('Error en chat API:', error)
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: 'Error al procesar el mensaje',
         message:
           'Lo siento, tuve un problema al procesar tu mensaje. ¿Puedes intentarlo de nuevo?',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
       },
-      { status: 500 },
     )
   }
 }
