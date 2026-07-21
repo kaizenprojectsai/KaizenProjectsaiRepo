@@ -46,6 +46,15 @@ export interface Decision {
   severity: 'info' | 'warning' | 'critical'
 }
 
+export interface DirectorConfig {
+  role: AgentRole
+  name: string
+  icon: string
+  color: string
+  description: string
+  systemPrompt: string
+}
+
 export interface AgentRunRequest {
   projectId: string
   projectData: AgentState['project']

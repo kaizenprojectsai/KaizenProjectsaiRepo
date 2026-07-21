@@ -1,7 +1,8 @@
-export type { AgentState, AgentPhase, AgentRole, AgentResult, Decision, AgentRunRequest } from './types'
+import type { DirectorConfig } from './types'
+export type { AgentState, AgentPhase, AgentRole, AgentResult, Decision, AgentRunRequest, DirectorConfig } from './types'
 export { runAgentSystem, createInitialState } from './orchestrator/graph'
 
-export const ALL_DIRECTORS = [
+export const ALL_DIRECTORS: DirectorConfig[] = [
   { role: 'strategic', name: 'Director Estratégico', icon: '🎯', color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400', description: 'Planeación estratégica y marco lógico', systemPrompt: '' },
   { role: 'financial', name: 'Director Financiero', icon: '💰', color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400', description: 'Viabilidad económica y financiera', systemPrompt: '' },
   { role: 'legal', name: 'Director Jurídico', icon: '⚖️', color: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400', description: 'Normativa colombiana', systemPrompt: '' },

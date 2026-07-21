@@ -31,7 +31,7 @@ interface CollaborationBoardProps {
 
 export function CollaborationBoard({ projectData, onSaveResult }: CollaborationBoardProps) {
   const [selectedAgents, setSelectedAgents] = useState<Set<AgentRole>>(
-    new Set(ALL_DIRECTORS.map((d) => d.role as AgentRole)),
+    new Set(ALL_DIRECTORS.map((d) => d.role)),
   )
   const [results, setResults] = useState<Partial<Record<AgentRole, AgentResult>>>({})
   const [decisions, setDecisions] = useState<Decision[]>([])
